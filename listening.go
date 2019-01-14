@@ -3,10 +3,13 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/zmb3/spotify"
 	"io/ioutil"
+	"listening.to/orm"
+	"listening.to/types"
 	"log"
 	"net/http"
 	"net/url"
@@ -14,13 +17,7 @@ import (
 	_ "time"
 )
 
-type AuthResponseBody struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	TokenType    string `json:"token_type"`
-	ExpiresIn    int16  `json:"expires_in"`
-	Scope        string `json:"scope"`
-}
+var o *orm.Orm
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "index.html")
@@ -33,29 +30,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: %s", errorCode)
 	}
 
-	resp, err := http.PostForm("https://accounts.spotify.com/api/token",
-		url.Values{
-			"grant_type":    {"authorization_code"},
-			"code":          {values.Get("code")},
-			"redirect_uri":  {os.Getenv("REDIRECT_URI")},
-			"client_id":     {os.Getenv("CLIENT_ID")},
-			"client_secret": {os.Getenv("CLIENT_SECRET")},
-		},
-	)
-	defer resp.Body.Close()
-
-	var auth = AuthResponseBody{}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Print(err)
-	}
-
-	json.Unmarshal(body, &auth)
-
-	if err != nil {
-		log.Print(err)
-	}
-
+	auth, err := requestAccessToken(values.Get("code"))
 	userResp, err := doAPIRequest(auth.AccessToken, "me")
 	if err != nil {
 		log.Print(err)
@@ -71,21 +46,12 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(userBody, &user)
 	fmt.Fprintf(w, "%+v\n", user)
 
-	db, err := sql.Open("sqlite3", "listening.db")
+	a := types.Account{user.ID, auth.AccessToken, auth.RefreshToken}
+	err = o.Write(a)
 	if err != nil {
 		log.Print(err)
 	}
-	defer db.Close()
-
-	res, err := db.Exec("INSERT OR REPLACE INTO ACCOUNTS (ID, ACCESS_TOKEN, REFRESH_TOKEN) VALUES ($1, $2, $3) ",
-		user.ID,
-		auth.AccessToken,
-		auth.RefreshToken,
-	)
-	if err != nil {
-		log.Print(err)
-	}
-	fmt.Fprintf(w, "%+v", res)
+	log.Print("Wrote %v", a)
 
 }
 
@@ -124,11 +90,11 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 	}
 	defer rows.Close()
-	var accs []Account
+	var accs []types.Account
 	for rows.Next() {
 		var id, atok, rtok string
 		rows.Scan(&id, &atok, &rtok)
-		accs = append(accs, Account{id, atok, rtok})
+		accs = append(accs, types.Account{id, atok, rtok})
 	}
 
 	for {
@@ -143,6 +109,21 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Print(err)
 			}
+			stat, err := checkAPIResponse(b)
+			if err != nil {
+				log.Print(err)
+			}
+			switch stat {
+			case 401:
+				auth, err := requestAccessToken(acc.RefreshToken)
+				if err != nil {
+					log.Print(err)
+				}
+				acc.AccessToken, acc.RefreshToken = auth.AccessToken, auth.RefreshToken
+				o.Write(acc)
+				log.Print("Updated account!!!")
+				continue
+			}
 
 			json.Unmarshal(b, &cur)
 			if err != nil {
@@ -154,14 +135,49 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-type Account struct {
-	ID           string
-	AccessToken  string
-	RefreshToken string
+func checkAPIResponse(b []byte) (stat int, err error) {
+	var a types.APIError
+	json.Unmarshal(b, &a)
+	if err != nil {
+		return
+	}
+	return a.ErrorContainer.Status, nil
+
+	return stat, errors.New("No Error response from API found")
+}
+
+func requestAccessToken(code string) (auth types.AuthResponseBody, err error) {
+	resp, err := http.PostForm("https://accounts.spotify.com/api/token",
+		url.Values{
+			"grant_type":    {"authorization_code"},
+			"code":          {code},
+			"redirect_uri":  {os.Getenv("REDIRECT_URI")},
+			"client_id":     {os.Getenv("CLIENT_ID")},
+			"client_secret": {os.Getenv("CLIENT_SECRET")},
+		},
+	)
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	json.Unmarshal(body, &auth)
+	if err != nil {
+		return
+	}
+	return
 }
 
 func main() {
-
+	var err error
+	o, err = orm.New("sqlite3")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer o.Destroy()
+	log.Printf("%+v\n", o)
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/callback", callbackHandler)
 	http.HandleFunc("/listening", listeningHandler)
