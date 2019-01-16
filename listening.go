@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -79,13 +78,7 @@ func newRequestWithToken(token, endpoint string) (req *http.Request, err error) 
 }
 
 func listeningHandler(w http.ResponseWriter, r *http.Request) {
-	db, err := sql.Open("sqlite3", "listening.db")
-	if err != nil {
-		log.Print(err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query("SELECT * FROM ACCOUNTS")
+	rows, err := o.Query(types.Account{})
 	if err != nil {
 		log.Print(err)
 	}
