@@ -11,6 +11,10 @@ type Orm struct {
 	db *sql.DB
 }
 
+type Queryable interface {
+	Table() string
+}
+
 func New(s string) (o *Orm, err error) {
 	var db *sql.DB
 	switch s {
@@ -43,5 +47,12 @@ func (o *Orm) Write(v interface{}) (err error) {
 		return fmt.Errorf("Not implemented for type %T\n", t)
 	}
 	return err
+}
 
+func (o *Orm) Query(q Queryable) (*sql.Rows, error) {
+	rows, err := o.db.Query("SELECT * FROM " + q.Table())
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
 }
