@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/zmb3/spotify"
-	"io/ioutil"
+	"golang.org/x/oauth2"
 	"listening.to/orm"
 	"listening.to/types"
 	"log"
@@ -45,30 +43,8 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func doAPIRequest(token, endpoint string) (r *http.Response, err error) {
-
-	req, err := newRequestWithToken(token, endpoint)
-	if err != nil {
-		return
-	}
-	r, err = http.DefaultClient.Do(req)
-	if err != nil {
-		return
-	}
-	return
-
-}
-
-func newRequestWithToken(token, endpoint string) (req *http.Request, err error) {
-	req, err = http.NewRequest("GET", "https://api.spotify.com/v1/"+endpoint, nil)
-	if err != nil {
-		return
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	return
-}
-
 func listeningHandler(w http.ResponseWriter, r *http.Request) {
+	auth := spotify.NewAuthenticator(os.Getenv("REDIRECT_URI"), spotify.ScopeUserReadCurrentlyPlaying)
 	rows, err := o.Query(types.Account{})
 	if err != nil {
 		log.Print(err)
@@ -83,51 +59,19 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		for _, acc := range accs {
-			r, err := doAPIRequest(acc.AccessToken, "me/player/currently-playing")
+			c := auth.NewClient(&oauth2.Token{
+				AccessToken:  acc.AccessToken,
+				RefreshToken: acc.RefreshToken,
+			})
+			cur, err := c.PlayerCurrentlyPlaying()
 			if err != nil {
 				log.Print(err)
 			}
 
-			var cur spotify.CurrentlyPlaying
-			b, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				log.Print(err)
-			}
-			stat, err := checkAPIResponse(b)
-			if err != nil {
-				log.Print(err)
-			}
-			switch stat {
-			case 401:
-				//auth, err := requestAccessToken(acc.RefreshToken)
-				//if err != nil {
-				//	log.Print(err)
-				//}
-				//acc.AccessToken, acc.RefreshToken = auth.AccessToken, auth.RefreshToken
-				//o.Write(acc)
-				//log.Print("Updated account!!!")
-				//continue
-			}
-
-			json.Unmarshal(b, &cur)
-			if err != nil {
-				log.Print(err)
-			}
 			fmt.Fprintf(w, "%+v", cur.Item)
 		}
 	}
 
-}
-
-func checkAPIResponse(b []byte) (stat int, err error) {
-	var a types.APIError
-	json.Unmarshal(b, &a)
-	if err != nil {
-		return
-	}
-	return a.ErrorContainer.Status, nil
-
-	return stat, errors.New("No Error response from API found")
 }
 
 func main() {
