@@ -5,3 +5,7 @@ type Account struct {
 	AccessToken  string
 	RefreshToken string
 }
+
+func (a Account) Table() string {
+	return "ACCOUNTS"
+}
