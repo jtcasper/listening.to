@@ -11,7 +11,6 @@ import (
 	"listening.to/types"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	_ "time"
 )
@@ -23,29 +22,21 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
-	values := r.URL.Query()
-	if errorCode, exists := values["error"]; exists {
-		fmt.Fprintf(w, "There was an error signing up: %s", errorCode)
-		log.Printf("Error: %s", errorCode)
+	auth := spotify.NewAuthenticator(os.Getenv("REDIRECT_URI"), spotify.ScopeUserReadPrivate)
+	auth.AuthURL("1")
+	token, err := auth.Token("1", r)
+	if err != nil {
+		http.Error(w, "Couldn't get token", http.StatusNotFound)
+		return
 	}
-
-	auth, err := requestAccessToken(values.Get("code"))
-	userResp, err := doAPIRequest(auth.AccessToken, "me")
+	client := auth.NewClient(token)
+	user, err := client.CurrentUser()
 	if err != nil {
 		log.Print(err)
 	}
-	defer userResp.Body.Close()
-
-	var user spotify.User
-	userBody, err := ioutil.ReadAll(userResp.Body)
-	if err != nil {
-		log.Print(err)
-	}
-
-	json.Unmarshal(userBody, &user)
 	fmt.Fprintf(w, "%+v\n", user)
 
-	a := types.Account{user.ID, auth.AccessToken, auth.RefreshToken}
+	a := types.Account{user.ID, token.AccessToken, token.RefreshToken}
 	err = o.Write(a)
 	if err != nil {
 		log.Print(err)
@@ -108,14 +99,14 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			switch stat {
 			case 401:
-				auth, err := requestAccessToken(acc.RefreshToken)
-				if err != nil {
-					log.Print(err)
-				}
-				acc.AccessToken, acc.RefreshToken = auth.AccessToken, auth.RefreshToken
-				o.Write(acc)
-				log.Print("Updated account!!!")
-				continue
+				//auth, err := requestAccessToken(acc.RefreshToken)
+				//if err != nil {
+				//	log.Print(err)
+				//}
+				//acc.AccessToken, acc.RefreshToken = auth.AccessToken, auth.RefreshToken
+				//o.Write(acc)
+				//log.Print("Updated account!!!")
+				//continue
 			}
 
 			json.Unmarshal(b, &cur)
@@ -137,30 +128,6 @@ func checkAPIResponse(b []byte) (stat int, err error) {
 	return a.ErrorContainer.Status, nil
 
 	return stat, errors.New("No Error response from API found")
-}
-
-func requestAccessToken(code string) (auth types.AuthResponseBody, err error) {
-	resp, err := http.PostForm("https://accounts.spotify.com/api/token",
-		url.Values{
-			"grant_type":    {"authorization_code"},
-			"code":          {code},
-			"redirect_uri":  {os.Getenv("REDIRECT_URI")},
-			"client_id":     {os.Getenv("CLIENT_ID")},
-			"client_secret": {os.Getenv("CLIENT_SECRET")},
-		},
-	)
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-
-	json.Unmarshal(body, &auth)
-	if err != nil {
-		return
-	}
-	return
 }
 
 func main() {
