@@ -38,10 +38,11 @@ func (o *Orm) Write(v interface{}) (err error) {
 	switch t := v.(type) {
 	case types.Account:
 		log.Printf("%+v\n", o)
-		_, err = o.db.Exec("INSERT OR REPLACE INTO ACCOUNTS (ID, ACCESS_TOKEN, REFRESH_TOKEN) VALUES ($1, $2, $3) ",
+		_, err = o.db.Exec("INSERT OR REPLACE INTO "+t.Table()+" (ID, ACCESS_TOKEN, REFRESH_TOKEN, EXPIRY) VALUES ($1, $2, $3, $4) ",
 			t.ID,
-			t.AccessToken,
-			t.RefreshToken,
+			t.Token.AccessToken,
+			t.Token.RefreshToken,
+			t.Token.Expiry,
 		)
 	default:
 		return fmt.Errorf("Not implemented for type %T\n", t)

@@ -10,7 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	_ "time"
+	"time"
 )
 
 var o *orm.Orm
@@ -34,7 +34,8 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, "%+v\n", user)
 
-	a := types.Account{user.ID, token.AccessToken, token.RefreshToken}
+	a := types.Account{user.ID, token}
+
 	err = o.Write(a)
 	if err != nil {
 		log.Print(err)

@@ -1,11 +1,14 @@
 package types
 
+import (
+	"golang.org/x/oauth2"
+)
+
 type Account struct {
-	ID           string
-	AccessToken  string
-	RefreshToken string
+	ID    string
+	Token *oauth2.Token
 }
 
 func (a Account) Table() string {
-	return "ACCOUNTS"
+	return "ACCOUNT"
 }
