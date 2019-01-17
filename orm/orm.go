@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"listening.to/types"
-	"log"
 )
 
 type Orm struct {
@@ -13,6 +12,10 @@ type Orm struct {
 
 type Queryable interface {
 	Table() string
+}
+
+type Rows struct {
+	rows *sql.Rows
 }
 
 func New(s string) (o *Orm, err error) {
@@ -37,7 +40,6 @@ func (o *Orm) Destroy() {
 func (o *Orm) Write(v interface{}) (err error) {
 	switch t := v.(type) {
 	case types.Account:
-		log.Printf("%+v\n", o)
 		_, err = o.db.Exec("INSERT OR REPLACE INTO "+t.Table()+" (ID, ACCESS_TOKEN, REFRESH_TOKEN, EXPIRY) VALUES ($1, $2, $3, $4) ",
 			t.ID,
 			t.Token.AccessToken,
@@ -50,10 +52,22 @@ func (o *Orm) Write(v interface{}) (err error) {
 	return err
 }
 
-func (o *Orm) Query(q Queryable) (*sql.Rows, error) {
+func (o *Orm) Query(q Queryable) (*Rows, error) {
 	rows, err := o.db.Query("SELECT * FROM " + q.Table())
 	if err != nil {
 		return nil, err
 	}
-	return rows, nil
+	r := &Rows{rows}
+	return r, nil
+}
+
+func (r *Rows) GetAccounts() []types.Account {
+	var accs []types.Account
+	defer r.rows.Close()
+	for r.rows.Next() {
+		var acc types.Account
+		r.rows.Scan(&acc.ID, &acc.Token.AccessToken, &acc.Token.RefreshToken, &acc.Token.Expiry)
+		accs = append(accs, acc)
+	}
+	return accs
 }

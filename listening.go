@@ -4,13 +4,13 @@ import (
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/zmb3/spotify"
-	"golang.org/x/oauth2"
+	_ "golang.org/x/oauth2"
 	"listening.to/orm"
 	"listening.to/types"
 	"log"
 	"net/http"
 	"os"
-	"time"
+	_ "time"
 )
 
 var o *orm.Orm
@@ -40,33 +40,35 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 	}
-	log.Print("Wrote %v", a)
 
 }
 
 func listeningHandler(w http.ResponseWriter, r *http.Request) {
 	auth := spotify.NewAuthenticator(os.Getenv("REDIRECT_URI"), spotify.ScopeUserReadCurrentlyPlaying)
 	rows, err := o.Query(types.Account{})
+	accs := rows.GetAccounts()
 	if err != nil {
 		log.Print(err)
 	}
-	defer rows.Close()
-	var accs []types.Account
-	for rows.Next() {
-		var id, atok, rtok string
-		rows.Scan(&id, &atok, &rtok)
-		accs = append(accs, types.Account{id, atok, rtok})
-	}
 
 	for {
-		for _, acc := range accs {
-			c := auth.NewClient(&oauth2.Token{
-				AccessToken:  acc.AccessToken,
-				RefreshToken: acc.RefreshToken,
-			})
+		for index, acc := range accs {
+			c := auth.NewClient(acc.Token)
 			cur, err := c.PlayerCurrentlyPlaying()
 			if err != nil {
-				log.Print(err)
+				switch err.Error() {
+				case "The access token expired":
+					t, err := c.Token()
+					if err != nil {
+						log.Print(err)
+					}
+					acc.Token = t
+					accs[index] = acc
+					o.Write(acc)
+					continue
+				default:
+					continue
+				}
 			}
 
 			fmt.Fprintf(w, "%+v", cur.Item)
