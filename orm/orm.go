@@ -61,11 +61,11 @@ func (o *Orm) Query(q Queryable) (*Rows, error) {
 	return r, nil
 }
 
-func (r *Rows) GetAccounts() []types.Account {
-	var accs []types.Account
+func (r *Rows) GetAccounts() []*types.Account {
+	var accs []*types.Account
 	defer r.rows.Close()
 	for r.rows.Next() {
-		var acc types.Account
+		acc := types.NewAccount()
 		r.rows.Scan(&acc.ID, &acc.Token.AccessToken, &acc.Token.RefreshToken, &acc.Token.Expiry)
 		accs = append(accs, acc)
 	}

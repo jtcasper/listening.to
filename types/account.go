@@ -12,3 +12,7 @@ type Account struct {
 func (a Account) Table() string {
 	return "ACCOUNT"
 }
+
+func NewAccount() *Account {
+	return &Account{Token: &oauth2.Token{}}
+}
