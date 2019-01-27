@@ -45,7 +45,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 
 func listeningHandler(w http.ResponseWriter, r *http.Request) {
 	auth := spotify.NewAuthenticator(os.Getenv("REDIRECT_URI"), spotify.ScopeUserReadCurrentlyPlaying)
-	rows, err := o.Query(types.Account{})
+	rows, err := o.Query(&types.Account{})
 	accs := rows.GetAccounts()
 	if err != nil {
 		log.Print(err)
