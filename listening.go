@@ -52,23 +52,26 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for {
-		for index, acc := range accs {
+		for _, acc := range accs {
 			c := auth.NewClient(acc.Token)
 			cur, err := c.PlayerCurrentlyPlaying()
 			if err != nil {
-				switch err.Error() {
-				case "The access token expired":
-					t, err := c.Token()
-					if err != nil {
-						log.Print(err)
-					}
+				log.Print(err)
+			}
+			t, err := c.Token()
+			if err != nil {
+				log.Print(err)
+			}
+			if acc.Token.AccessToken != t.AccessToken {
+				if t.RefreshToken != nil {
 					acc.Token = t
-					accs[index] = acc
-					o.Write(acc)
-					continue
-				default:
-					continue
+				} else {
+					//Conserve current RefreshToken so that we don't get shut out
+					acc.Token.AccessToken, acc.Token.Expiry = t.AccessToken, t.Expiry
 				}
+				go func(acc *types.Account) {
+					o.Write(acc)
+				}(acc)
 			}
 
 			fmt.Fprintf(w, "%+v", cur.Item)
@@ -84,7 +87,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer o.Destroy()
-	log.Printf("%+v\n", o)
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/callback", callbackHandler)
 	http.HandleFunc("/listening", listeningHandler)
