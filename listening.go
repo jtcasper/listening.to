@@ -63,7 +63,7 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 				log.Print(err)
 			}
 			if acc.Token.AccessToken != t.AccessToken {
-				if t.RefreshToken != nil {
+				if t.RefreshToken != "" {
 					acc.Token = t
 				} else {
 					//Conserve current RefreshToken so that we don't get shut out
