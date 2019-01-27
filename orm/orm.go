@@ -47,6 +47,21 @@ func (o *Orm) Write(v interface{}) (err error) {
 			t.Token.RefreshToken,
 			t.Token.Expiry,
 		)
+	case types.Playing:
+	case *types.Playing:
+		_, err = o.db.Exec("INSERT INTO "+t.Table()+" (ACCOUNT_ID, TRACK_ID, AT_TIME) VALUES ($1, $2, $3) ",
+			t.AccountID,
+			t.CP.Item.ID,
+			t.CP.Timestamp,
+		)
+	case types.Track:
+	case *types.Track:
+		_, err = o.db.Exec("INSERT OR REPLACE INTO"+t.Table()+" (ID, ALBUM_ID, NAME, DURATION) VALUES () ",
+			t.Track.ID,
+			t.Track.Album.ID,
+			t.Track.Name,
+			t.Track.Duration,
+		)
 	default:
 		return fmt.Errorf("Not implemented for type %T\n", t)
 	}
