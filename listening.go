@@ -34,7 +34,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, "%+v\n", user)
 
-	a := types.Account{user.ID, token}
+	a := types.Account{spotify.ID(user.ID), token}
 
 	err = o.Write(a)
 	if err != nil {

@@ -2,11 +2,12 @@ package types
 
 import (
 	"fmt"
+	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
 )
 
 type Account struct {
-	ID    string
+	ID    spotify.ID
 	Token *oauth2.Token
 }
 
