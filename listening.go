@@ -58,6 +58,9 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Print(err)
 			}
+			p := &types.Playing{cur, acc.ID}
+			o.Write(p)
+			// Make sure we keep track if a token changes
 			t, err := c.Token()
 			if err != nil {
 				log.Print(err)
@@ -73,8 +76,6 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 					o.Write(acc)
 				}(acc)
 			}
-
-			fmt.Fprintf(w, "%+v", cur.Item)
 		}
 	}
 

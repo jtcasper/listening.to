@@ -6,7 +6,7 @@ import (
 
 // Wraps spotify.Track for our ORM
 type Track struct {
-	Track spotify.FullTrack
+	Track *spotify.FullTrack
 }
 
 func (t *Track) Table() string {

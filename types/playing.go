@@ -6,7 +6,7 @@ import (
 
 // Wraps spotify.CurrentlyPlaying for use by our ORM.
 type Playing struct {
-	CP        spotify.CurrentlyPlaying
+	CP        *spotify.CurrentlyPlaying
 	AccountID spotify.ID
 }
 
