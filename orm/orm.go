@@ -40,6 +40,7 @@ func (o *Orm) Destroy() {
 func (o *Orm) Write(v interface{}) (err error) {
 	switch t := v.(type) {
 	case types.Account:
+	case *types.Account:
 		_, err = o.db.Exec("INSERT OR REPLACE INTO "+t.Table()+" (ID, ACCESS_TOKEN, REFRESH_TOKEN, EXPIRY) VALUES ($1, $2, $3, $4) ",
 			t.ID,
 			t.Token.AccessToken,
