@@ -32,7 +32,6 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 	}
-	fmt.Fprintf(w, "%+v\n", user)
 
 	a := types.Account{spotify.ID(user.ID), token}
 
@@ -40,6 +39,16 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "account_info",
+		Value:    string(a.ID),
+		Path:     "/",
+		Domain:   "2600:1700:24d1:4b50::6f3",
+		Secure:   false,
+		HttpOnly: false,
+	})
+	fmt.Fprintf(w, "%+v\n", user)
 
 }
 
@@ -89,6 +98,14 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func analyzeHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("account_info")
+	if err != nil {
+		log.Print(err)
+		return
+	}
+}
+
 func main() {
 	var err error
 	o, err = orm.New("sqlite3")
@@ -99,5 +116,6 @@ func main() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/callback", callbackHandler)
 	http.HandleFunc("/listening", listeningHandler)
+	http.HandleFunc("/analyze", analyzeHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
