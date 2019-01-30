@@ -10,7 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	_ "time"
+	"time"
 )
 
 var o *orm.Orm
@@ -56,7 +56,14 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 			c := auth.NewClient(acc.Token)
 			cur, err := c.PlayerCurrentlyPlaying()
 			if err != nil {
-				log.Print(err)
+				switch err.Error() {
+				case "API rate limit exceeded":
+					log.Print(err)
+					time.Sleep(3 * time.Second)
+					continue
+				default:
+					log.Print(err)
+				}
 			}
 			p := &types.Playing{cur, acc.ID}
 			o.Write(p)
@@ -76,6 +83,7 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 					o.Write(acc)
 				}(acc)
 			}
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 
