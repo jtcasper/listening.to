@@ -77,6 +77,15 @@ func (o *Orm) Query(q Queryable) (*Rows, error) {
 	return r, nil
 }
 
+func (o *Orm) RawQuery(v string, args ...interface{}) (*Rows, error) {
+	rows, err := o.db.Query(v, args...)
+	if err != nil {
+		return nil, err
+	}
+	r := &Rows{rows}
+	return r, nil
+}
+
 func (r *Rows) GetAccounts() []*types.Account {
 	var accs []*types.Account
 	defer r.rows.Close()
@@ -86,4 +95,15 @@ func (r *Rows) GetAccounts() []*types.Account {
 		accs = append(accs, acc)
 	}
 	return accs
+}
+
+func (r *Rows) GetPlaying() []*types.Playing {
+	var plays []*types.Playing
+	defer r.rows.Close()
+	for r.rows.Next() {
+		p := &types.Playing{}
+		r.rows.Scan(&p.AccountID, &p.TrackID, &p.Timestamp)
+		plays = append(plays, p)
+	}
+	return plays
 }
