@@ -113,6 +113,16 @@ func analyzeHandler(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 		return
 	}
+	rows, err := o.RawQuery("SELECT * FROM PLAYING WHERE ACCOUNT_ID = $1", cookie.Value)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	plays := rows.GetPlaying()
+	pc := &types.PlayingContainer{plays}
+	log.Print(pc)
+	log.Print(pc.MostPlayed())
+
 }
 
 func main() {
