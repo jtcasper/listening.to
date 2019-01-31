@@ -51,8 +51,8 @@ func (o *Orm) Write(v interface{}) (err error) {
 	case *types.Playing:
 		_, err = o.db.Exec("INSERT INTO "+t.Table()+" (ACCOUNT_ID, TRACK_ID, AT_TIME) VALUES ($1, $2, $3) ",
 			t.AccountID,
-			t.CP.Item.ID,
-			t.CP.Timestamp,
+			t.TrackID,
+			t.Timestamp,
 		)
 	case types.Track:
 	case *types.Track:

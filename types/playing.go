@@ -6,8 +6,9 @@ import (
 
 // Wraps spotify.CurrentlyPlaying for use by our ORM.
 type Playing struct {
-	CP        *spotify.CurrentlyPlaying
 	AccountID spotify.ID
+	TrackID   spotify.ID
+	Timestamp int64
 }
 
 func (p *Playing) Table() string {

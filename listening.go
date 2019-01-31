@@ -74,7 +74,11 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 					log.Print(err)
 				}
 			}
-			p := &types.Playing{cur, acc.ID}
+			p := &types.Playing{
+				acc.ID,
+				cur.Item.ID,
+				cur.Timestamp,
+			}
 			o.Write(p)
 			// Make sure we keep track if a token changes
 			t, err := c.Token()
