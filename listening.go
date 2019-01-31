@@ -62,6 +62,7 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		for _, acc := range accs {
+			time.Sleep(100 * time.Millisecond)
 			c := auth.NewClient(acc.Token)
 			cur, err := c.PlayerCurrentlyPlaying()
 			if err != nil {
@@ -72,7 +73,12 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 					continue
 				default:
 					log.Print(err)
+					continue
 				}
+			}
+			if cur.Item == nil {
+				// podcasters lul
+				continue
 			}
 			p := &types.Playing{
 				acc.ID,
@@ -96,7 +102,6 @@ func listeningHandler(w http.ResponseWriter, r *http.Request) {
 					o.Write(acc)
 				}(acc)
 			}
-			time.Sleep(100 * time.Millisecond)
 		}
 	}
 
