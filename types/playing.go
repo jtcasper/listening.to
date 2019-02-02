@@ -38,3 +38,16 @@ func (pc *PlayingContainer) MostPlayed() *Playing {
 	}
 	return maxPlay
 }
+
+//Returns the unique Track IDs in this container.
+func (pc *PlayingContainer) UniqueTracks() *TrackContainer {
+	trackSet := make(map[spotify.ID]bool)
+	var ts []*Track
+	for _, p := range pc.Plays {
+		if in := trackSet[p.TrackID]; !in {
+			trackSet[p.TrackID] = true
+			ts = append(ts, &Track{ID: p.TrackID})
+		}
+	}
+	return &TrackContainer{ts}
+}
