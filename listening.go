@@ -118,8 +118,7 @@ func analyzeHandler(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 		return
 	}
-	plays := rows.GetPlaying()
-	pc := &types.PlayingContainer{plays}
+	pc := rows.GetPlaying()
 	log.Print(pc)
 	log.Print(pc.MostPlayed())
 

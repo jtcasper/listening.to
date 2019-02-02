@@ -97,7 +97,7 @@ func (r *Rows) GetAccounts() []*types.Account {
 	return accs
 }
 
-func (r *Rows) GetPlaying() []*types.Playing {
+func (r *Rows) GetPlaying() *types.PlayingContainer {
 	var plays []*types.Playing
 	defer r.rows.Close()
 	for r.rows.Next() {
@@ -105,5 +105,5 @@ func (r *Rows) GetPlaying() []*types.Playing {
 		r.rows.Scan(&p.AccountID, &p.TrackID, &p.Timestamp)
 		plays = append(plays, p)
 	}
-	return plays
+	return &types.PlayingContainer{plays}
 }
