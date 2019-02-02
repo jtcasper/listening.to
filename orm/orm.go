@@ -56,11 +56,11 @@ func (o *Orm) Write(v interface{}) (err error) {
 		)
 	case types.Track:
 	case *types.Track:
-		_, err = o.db.Exec("INSERT OR REPLACE INTO"+t.Table()+" (ID, ALBUM_ID, NAME, DURATION) VALUES () ",
-			t.Track.ID,
-			t.Track.Album.ID,
-			t.Track.Name,
-			t.Track.Duration,
+		_, err = o.db.Exec("INSERT OR REPLACE INTO "+t.Table()+" (ID, ALBUM_ID, NAME, DURATION) VALUES ($1, $2, $3, $4) ",
+			t.ID,
+			t.AlbumID,
+			t.Name,
+			t.Duration,
 		)
 	default:
 		return fmt.Errorf("Not implemented for type %T\n", t)

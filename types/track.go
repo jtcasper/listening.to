@@ -4,10 +4,18 @@ import (
 	"github.com/zmb3/spotify"
 )
 
-// Wraps spotify.Track for our ORM
-type Track struct {
-	Track *spotify.FullTrack
-}
+type (
+	// Wraps necessary spotify.Track fields for our ORM
+	Track struct {
+		ID       spotify.ID
+		AlbumID  spotify.ID
+		Name     string
+		Duration int
+	}
+	TrackContainer struct {
+		Tracks []*Track
+	}
+)
 
 func (t *Track) Table() string {
 	return "TRACK"
