@@ -16,6 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to create orm: ", err)
 	}
+	defer o.Destroy()
 
 	config := &clientcredentials.Config{
 		ClientID:     os.Getenv("SPOTIFY_ID"),
