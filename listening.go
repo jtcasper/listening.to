@@ -15,7 +15,11 @@ import (
 var o *orm.Orm
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "index.html")
+	if r.URL.Path == "/" {
+		http.ServeFile(w, r, "content/index.html")
+	} else {
+		http.ServeFile(w, r, r.URL.Path[1:])
+	}
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
