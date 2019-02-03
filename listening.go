@@ -19,9 +19,14 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
+	st := r.FormValue("state")
+	if st == "" {
+		http.NotFound(w, r)
+		log.Print("Couldn't get token")
+		return
+	}
 	auth := spotify.NewAuthenticator(os.Getenv("REDIRECT_URI"), spotify.ScopeUserReadPrivate)
-	auth.AuthURL("1")
-	token, err := auth.Token("1", r)
+	token, err := auth.Token(st, r)
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusNotFound)
 		return
