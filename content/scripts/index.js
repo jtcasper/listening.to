@@ -6,3 +6,14 @@ function appendLoginState() {
   const loginUrl = document.getElementById('login')
   loginUrl.href = loginUrl.href + '&state=' + getLoginState()
 }
+
+function checkCookieExists() {
+  const listeningCookieName = "account_info"
+  const cookies = document.cookie
+  return cookies.split(';').filter((item) => item.includes('account_info=')).length >= 1
+}
+
+function hideLoginUrl() {
+  const loginUrl = document.getElementById('login')
+  loginUrl.style.display = 'none'
+}
