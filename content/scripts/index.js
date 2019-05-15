@@ -7,10 +7,17 @@ function appendLoginState() {
   loginUrl.href = loginUrl.href + '&state=' + getLoginState()
 }
 
-function checkCookieExists() {
+function getAccountCookie() {
   const listeningCookieName = "account_info"
   const cookies = document.cookie
-  return cookies.split(';').filter((item) => item.includes('account_info=')).length >= 1
+  return cookies.split(';')
+    .filter((item) => item.includes(`${listeningCookieName}=`))
+    .map((cookie) => cookie.split('='))
+    .reduce((prev, [key, value]) => (prev[key] = value,prev), {})
+}
+
+function checkCookieExists() {
+  return getAccountCookie() !== undefined
 }
 
 function hideLoginUrl() {
