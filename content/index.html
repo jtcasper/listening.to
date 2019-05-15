@@ -13,10 +13,20 @@
         <a href="analyze">Analyze</a>
       </div>
     </div>
+    <div id="analyzeContent">
+    </div>
     <script>
       appendLoginState();
       if (checkCookieExists()) {
         hideLoginUrl();
+        const container = callAnalyze()
+        .then(res => res.track_container)
+        .then(container => container.map(track => {
+          const body = document.getElementById('analyzeContent');
+          const newNode = document.createElement('p');
+          newNode.appendChild(document.createTextNode(track.name));
+          body.appendChild(newNode);
+        }))
       }
     </script>
   </body>

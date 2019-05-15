@@ -17,3 +17,10 @@ function hideLoginUrl() {
   const loginUrl = document.getElementById('login')
   loginUrl.style.display = 'none'
 }
+
+function callAnalyze() {
+  const analyzeUrl = 'analyze'
+  return fetch(analyzeUrl)
+  .then(data => data.json())
+  .then(res => res)
+}
