@@ -49,10 +49,11 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "account_info",
-		Value:    string(a.ID),
-		Path:     "/",
-		Domain:   "2600:1700:24d1:4b50::6f3",
+		Name:  "account_info",
+		Value: string(a.ID),
+		Path:  "/",
+		//		Domain:   "2600:1700:24d1:4b50::4d8",
+		Domain:   "localhost",
 		Secure:   false,
 		HttpOnly: false,
 	})
