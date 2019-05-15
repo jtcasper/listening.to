@@ -7,13 +7,13 @@ import (
 type (
 	// Wraps necessary spotify.Track fields for our ORM
 	Track struct {
-		ID       spotify.ID
-		AlbumID  spotify.ID
-		Name     string
-		Duration int
+		ID       spotify.ID `json:"id"`
+		AlbumID  spotify.ID `json:"album_id,omitempty"`
+		Name     string     `json:"name,omitempty"`
+		Duration int        `json:"duration,omitempty"`
 	}
 	TrackContainer struct {
-		Tracks []*Track
+		Tracks []*Track `json:"track_container"`
 	}
 )
 
