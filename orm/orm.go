@@ -107,3 +107,14 @@ func (r *Rows) GetPlaying() *types.PlayingContainer {
 	}
 	return &types.PlayingContainer{plays}
 }
+
+func (r *Rows) GetTracks() *types.TrackContainer {
+	var tracks []*types.Track
+	defer r.rows.Close()
+	for r.rows.Next() {
+		t := &types.Track{}
+		r.rows.Scan(&t.ID, &t.AlbumID, &t.Name, &t.Duration)
+		tracks = append(tracks, t)
+	}
+	return &types.TrackContainer{tracks}
+}

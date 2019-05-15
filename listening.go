@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/zmb3/spotify"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 var o *orm.Orm
@@ -73,9 +75,28 @@ func analyzeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pc := rows.GetPlaying()
-	log.Print(pc)
-	log.Print(pc.MostPlayed())
 
+	var trackIds []string
+
+	for _, played_track := range pc.Plays {
+		trackIds = append(trackIds, `"`+string(played_track.TrackID)+`"`)
+	}
+
+	trackRows, err := o.RawQuery(fmt.Sprintf("SELECT * FROM TRACK WHERE ID IN (%s)", strings.Join(trackIds, ",")))
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	trackContainer := trackRows.GetTracks()
+	b, err := json.Marshal(trackContainer)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(b)
 }
 
 func main() {
