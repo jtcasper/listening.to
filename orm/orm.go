@@ -77,8 +77,8 @@ func (o *Orm) Query(q Queryable) (*Rows, error) {
 	return r, nil
 }
 
-func (o *Orm) RawQuery(v string, args ...interface{}) (*Rows, error) {
-	rows, err := o.db.Query(v, args...)
+func (o *Orm) RawQuery(query string, args ...interface{}) (*Rows, error) {
+	rows, err := o.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
