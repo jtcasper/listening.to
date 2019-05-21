@@ -118,3 +118,14 @@ func (r *Rows) GetTracks() *types.TrackContainer {
 	}
 	return &types.TrackContainer{tracks}
 }
+
+func (r *Rows) GetTracksWithCounts() *types.TrackCountContainer {
+	var tracks []*types.TrackCount
+	defer r.rows.Close()
+	for r.rows.Next() {
+		t := &types.TrackCount{}
+		r.rows.Scan(&t.ID, &t.AlbumID, &t.Name, &t.Duration, &t.PlayCount)
+		tracks = append(tracks, t)
+	}
+	return &types.TrackCountContainer{tracks}
+}

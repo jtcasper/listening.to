@@ -15,6 +15,13 @@ type (
 	TrackContainer struct {
 		Tracks []*Track `json:"track_container"`
 	}
+	TrackCount struct {
+		Track
+		PlayCount int `json:"play_count,omitempty"`
+	}
+	TrackCountContainer struct {
+		TrackCounts []*TrackCount `json:"track_container"`
+	}
 )
 
 func (t *Track) Table() string {
