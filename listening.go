@@ -11,7 +11,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 )
 
 var o *orm.Orm
@@ -64,31 +63,26 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func analyzeHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("account_info")
-	if err != nil {
-		log.Print(err)
-		return
-	}
-	rows, err := o.RawQuery("SELECT * FROM PLAYING WHERE ACCOUNT_ID = $1", cookie.Value)
-	if err != nil {
-		log.Print(err)
-		return
-	}
-	pc := rows.GetPlaying()
-
-	var trackIds []string
-
-	for _, played_track := range pc.Plays {
-		trackIds = append(trackIds, `"`+string(played_track.TrackID)+`"`)
-	}
-
-	trackRows, err := o.RawQuery(fmt.Sprintf("SELECT * FROM TRACK WHERE ID IN (%s)", strings.Join(trackIds, ",")))
+	accountCookie, err := r.Cookie("account_info")
 	if err != nil {
 		log.Print(err)
 		return
 	}
 
-	trackContainer := trackRows.GetTracks()
+	trackRows, err := o.RawQuery(
+		`select track.*, count(id)
+		from track
+		join playing on track.id = playing.track_id
+		where playing.account_id = $1
+		group by id;`,
+		accountCookie.Value,
+	)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	trackContainer := trackRows.GetTracksWithCounts()
 	b, err := json.Marshal(trackContainer)
 	if err != nil {
 		log.Print(err)
