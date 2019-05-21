@@ -14,6 +14,12 @@
       </div>
     </div>
     <div id="analyzeContent">
+      <table id="songListens">
+        <tr>
+          <th>Title</th>
+          <th>Listens</th>
+        </tr>
+      </table>
     </div>
     <script>
       appendLoginState();
@@ -22,10 +28,12 @@
         const container = callAnalyze()
         .then(res => res.track_container)
         .then(container => container.map(track => {
-          const body = document.getElementById('analyzeContent');
-          const newNode = document.createElement('p');
-          newNode.appendChild(document.createTextNode(track.name));
-          body.appendChild(newNode);
+          const table = document.getElementById('songListens');
+          const row = table.insertRow();
+          Object.keys(track).filter(key => ['name', 'play_count'].includes(key))
+          .map((key, cellIndex) => {
+            row.insertCell(cellIndex).innerHTML = track[key];
+          })
         }))
       }
     </script>
