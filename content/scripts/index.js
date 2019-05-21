@@ -17,7 +17,8 @@ function getAccountCookie() {
 }
 
 function checkCookieExists() {
-  return getAccountCookie() !== undefined
+  const cookie = getAccountCookie()
+  return !(Object.keys(cookie).length === 0 && obj.constructor === Object)
 }
 
 function hideLoginUrl() {
